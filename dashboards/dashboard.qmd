@@ -18,11 +18,6 @@ jupyter: python3
 print('<style>')
 print('''
 /* ============================================================
-   IMPORTS
-   ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');
-
-/* ============================================================
    VARIABLES & RESET
    ============================================================ */
 :root {
@@ -38,8 +33,8 @@ print('''
   --texto-muted: #6b6560;
   --blanco:      #ffffff;
 
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body:    'DM Sans', sans-serif;
+  --font-display: 'Helvetica', Georgia, serif;
+  --font-body:    'Times New Roman', sans-serif;
 
   --radius: 12px;
   --sombra: 0 2px 12px rgba(0,0,0,0.07);
@@ -47,23 +42,47 @@ print('''
 
 * { box-sizing: border-box; }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--gris-claro);
   color: var(--texto);
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Quarto overrides */
 #quarto-content,
-.page-layout-full #quarto-content {
+.page-layout-full #quarto-content, 
+#quarto-document-content, .quarto-container, div.quarto-post, .page-full {
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100% !important;
 }
-.quarto-title-block, h1.title { display: none !important; }
-main.content { padding: 0 !important; }
+.quarto-title-block,
+h1.title,
+#title-block-header,
+.quarto-title-banner,
+header#quarto-header,
+#quarto-margin-sidebar,
+.quarto-sidebar,
+nav#quarto-sidebar,
+#quarto-toc-target,
+.toc-active {
+  display: none !important;
+}
+
+main-content, main#quarto-document-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.fullcontent{
+  padding-top: 0 !important;
+}
 
 /* ============================================================
    NAV HEADER
@@ -78,45 +97,52 @@ main.content { padding: 0 !important; }
   height: 56px;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+  box-shadow: 1px solid rgba(0,0,0,0.4);
+}
+.nav-header p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+.nav-header p a {
+  display: flex;
+  align-items: center;
 }
 .nav-header .nav-logo {
-  height: 34px;
+  height: 40px;
+  width: auto;
   object-fit: contain;
+  vertical-align: middle;
+  margin-right: 1rem;
+}
+.nav-header .nav-logo-unam {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  vertical-align: middle;
 }
 .nav-header nav {
   display: flex;
-  gap: 2.5rem;
+  gap: 1.5rem;
 }
 .nav-header nav a {
   color: white;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  opacity: 0.88;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
   transition: opacity .2s;
 }
 .nav-header nav a:hover { opacity: 1; }
-.nav-header .nav-unam {
-  height: 36px;
-  object-fit: contain;
-}
-.nav-unam{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
 /* ============================================================
    PAGE WRAPPER
    ============================================================ */
 .page-wrapper {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 2rem 4rem;
+  padding: 1.5rem 2rem 4rem;
 }
 
 /* ============================================================
@@ -125,21 +151,21 @@ main.content { padding: 0 !important; }
 .hero {
   display: grid;
   grid-template-columns: 1fr 280px;
-  gap: 2rem;
-  margin-bottom: 2.5rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
   align-items: start;
 }
 .hero-left .ods-tags {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.33rem;
   margin-bottom: 1rem;
 }
 .ods-tag {
   background: var(--rosa-bg);
   color: var(--rosa-header);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 5px 10px;
   border-radius: 20px;
   letter-spacing: 0.03em;
 }
@@ -153,7 +179,7 @@ main.content { padding: 0 !important; }
 }
 .hero-left p {
   font-size: 0.97rem;
-  line-height: 1.7;
+  line-height: 1.50;
   color: var(--texto-muted);
   margin: 0;
   max-width: 560px;
@@ -161,7 +187,7 @@ main.content { padding: 0 !important; }
 .hero-right {
   background: #c9d5d8;
   border-radius: var(--radius);
-  padding: 1.2rem 1.4rem;
+  padding: 1.2rem 1.2rem;
   font-size: 0.82rem;
   color: #3a4a50;
   min-height: 130px;
@@ -178,11 +204,17 @@ main.content { padding: 0 !important; }
   color: #2b3e45;
 }
 .hero-right a { color: var(--azul); font-weight: 600; }
-.hero-right .nota {
+.hero-right {
   font-style: italic;
   font-size: 0.78rem;
   color: #556;
-  margin-top: 0.8rem;
+  margin-top: 0.4rem;
+}
+.nota {
+  font-style: italic;
+  font-size: 0.28rem;
+  color: #556;
+  margin-top: 0.4rem;
 }
 
 /* ============================================================
@@ -197,7 +229,7 @@ main.content { padding: 0 !important; }
 .kpi-card {
   background: white;
   border-radius: var(--radius);
-  padding: 1.1rem 1.3rem 1rem;
+  padding: 0.8rem 1rem 0.8rem;
   box-shadow: var(--sombra);
   border-top: 3px solid var(--rosa-claro);
 }
@@ -207,11 +239,11 @@ main.content { padding: 0 !important; }
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--rosa-claro);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 .kpi-card .kpi-value {
   font-family: var(--font-display);
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 900;
   color: var(--texto);
   line-height: 1;
@@ -259,8 +291,9 @@ main.content { padding: 0 !important; }
   background: white;
   border-radius: var(--radius);
   box-shadow: var(--sombra);
-  padding: 1.2rem 1.4rem;
+  padding: 0.6rem 1.4rem;
   overflow: hidden;
+  margin-bottom: 0.8rem;
 }
 .chart-card .chart-title {
   font-size: 0.82rem;
@@ -295,19 +328,20 @@ main.content { padding: 0 !important; }
 .thumbs-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.5rem;
 }
 .thumb-card {
   background: white;
   border-radius: var(--radius);
   box-shadow: var(--sombra);
-  padding: 0.9rem 1rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color .2s, box-shadow .2s;
   text-decoration: none;
   color: inherit;
   display: block;
+  scroll-behavior: smooth;
 }
 .thumb-card:hover {
   border-color: var(--rosa-claro);
@@ -442,54 +476,68 @@ CHART_LAYOUT = dict(
 )
 ```
 
+```{=html}
 <!-- ============================================================
      NAV HEADER
      ============================================================ -->
-::: {.nav-header}
-<img src="assets/logo_hackods.png" class="nav-logo" alt="HackODS">
-<nav>
-[Datos](#datos){.nav-link}
-[Brecha](#brecha){.nav-link}
-[Acciones](#acciones){.nav-link}
-</nav>
-<img src="assets/unam.png" class="nav-unam" alt="UNAM">
+```
+
+::: nav-header
+[![](assets/logo_hackods.png){.nav-logo}![](assets/unam-logo.svg){.nav-logo-unam}](https://www.hackods.unam.mx/)
+
+<nav>[Datos](#datos){.nav-link} [Brecha](#brecha){.nav-link} [Acciones](#acciones){.nav-link}</nav>
 :::
 
+```{=html}
 <!-- ============================================================
      PAGE WRAPPER START
      ============================================================ -->
-::: {.page-wrapper}
+```
 
+:::::::::::::::::::::::::::::::::::::::: page-wrapper
+```{=html}
 <!-- ============================================================
      SECCIÓN: DATOS
      ============================================================ -->
-::: {.section-anchor #datos}
+```
 
+::::::::::::::::::::: {#datos .section-anchor}
 <!-- HERO -->
-::: {.hero}
-::: {.hero-left}
-::: {.ods-tags}
-[ODS 1]{.ods-tag}
-[ODS 5]{.ods-tag}
+
+:::::: hero
+:::: hero-left
+::: ods-tags
+[ODS 1]{.ods-tag} [ODS 5]{.ods-tag}
 :::
 
-## Trabajar no es suficiente: El género define quién cae en la pobreza {.section-title style="font-family:'Fraunces',serif;font-size:2.4rem;line-height:1.15;color:#b85068;font-weight:900;margin:0 0 1rem;"}
+## Trabajar no es suficiente: El género define quién cae en la pobreza {.section-title style="font-family:'Helvetica',serif;font-size:2.4rem;line-height:1.15;color:#b85068;font-weight:900;margin:0 0 1rem;"}
 
-**En México, el empleo no garantiza una vida digna para todos.** Mientras persista la brecha salarial, las mujeres seguirán siendo las más vulnerables a la pobreza laboral. Este análisis explora cómo la discriminación de ingresos y la informalidad actúan como trampas económicas que impiden alcanzar el fin de la pobreza sin antes lograr una verdadera igualdad de género.
-:::
+**En México, el empleo no garantiza una vida digna para todos.** Mientras persista la brecha salarial, las mujeres seguirán siendo las más vulnerables a la _pobreza laboral_. Este análisis explora cómo la discriminación de ingresos y la informalidad actúan como trampas económicas que impiden alcanzar el fin de la pobreza sin antes lograr una verdadera igualdad de género.
 
-::: {.hero-right}
+
+::::
+
+:::: {style="display: flex; flex-direction: column; gap: 0.8rem;"}
+::: {.hero-right style="min-height: auto; padding: 1rem;"}
 [FUENTES DE DATOS]{.fuentes-title}
 
-Datos obtenidos del **INEGI** ([ENOE](https://www.inegi.org.mx/programas/enoe/15ymas/)) y **CONEVAL** ([ITLP](https://www.coneval.org.mx/Medicion/Paginas/ITLP-IS_pobreza_laboral.aspx)).
+Datos del **INEGI** ([ENOE](https://www.inegi.org.mx/programas/enoe/15ymas/)) y **CONEVAL** ([ITLP](https://www.coneval.org.mx/Medicion/Paginas/ITLP-IS_pobreza_laboral.aspx)).
+:::
 
-[*\* Todos los cálculos y gráficas mostradas son a nivel nacional*]{.nota}
+::: {.hero-right style="min-height: auto; padding: 1rem;"}
+[POBREZA LABORAL]{.fuentes-title}
+
+[Ver definición oficial del CONEVAL ↗](https://blog.coneval.org.mx/2023/02/21/que-es-pobreza-laboral/)
+
+
 :::
-:::
+::::
+::::::
 
 <!-- KPIs -->
-::: {.kpi-grid}
-::: {.kpi-card}
+
+::::::: kpi-grid
+::: kpi-card
 [BRECHA SALARIAL]{.kpi-label}
 
 ```{python}
@@ -498,7 +546,7 @@ Markdown(f'<div class="kpi-value">{brecha_promedio:.1f}%</div><div class="kpi-de
 ```
 :::
 
-::: {.kpi-card}
+::: kpi-card
 [HOGARES EN POBREZA]{.kpi-label}
 
 ```{python}
@@ -506,7 +554,7 @@ Markdown(f'<div class="kpi-value">{ultimo_pob_jef_muj:.1f}%</div><div class="kpi
 ```
 :::
 
-::: {.kpi-card}
+::: kpi-card
 [EXPOSICIÓN A LA POBREZA]{.kpi-label}
 
 ```{python}
@@ -514,24 +562,25 @@ Markdown(f'<div class="kpi-value">{ratio_pobreza_mh}:1</div><div class="kpi-desc
 ```
 :::
 
-::: {.kpi-card}
+::: kpi-card
 [EMPLEO INFORMAL]{.kpi-label}
 
 ```{python}
 Markdown(f'<div class="kpi-value">{ratio_informalidad}:1</div><div class="kpi-desc">Radio de pobreza laboral en sector informal vs formal.</div>')
 ```
 :::
-:::
+:::::::
 
 <!-- GRÁFICA PRINCIPAL + MINIATURAS -->
-::: {.section-title}
+
+::: section-title
 ¿La pobreza viene de la brecha salarial?
 :::
+
 [Trazando la diferencia histórica entre el ingreso de las mujeres y los hombres.]{.section-subtitle}
 
-::: {.two-col .col-6-4}
-
-::: {.chart-card}
+::::::::: {.two-col .col-6-4}
+::: chart-card
 [INGRESO PROMEDIO MENSUAL: HOMBRES VS MUJERES (2005–2024)]{.chart-title}
 
 ```{python}
@@ -564,58 +613,46 @@ fig.update_layout(
     yaxis=dict(title='Ingreso promedio mensual ($)', gridcolor='rgba(0,0,0,0.05)', range=[4500, 8800]),
     annotations=[dict(
         x=df_clean['fecha'].iloc[len(df_clean)//2],
-        y=(df_clean['ingreso_hombres'].mean() + df_clean['ingreso_mujeres'].mean()) / 2,
-        text="La brecha salarial se correlaciona<br>con la pobreza nacional",
-        showarrow=False,
-        font=dict(size=10, color='#555'),
-        bgcolor='rgba(255,255,255,0.9)',
-        bordercolor=COLOR_FEMENINO, borderwidth=1, borderpad=8
+        y=(df_clean['ingreso_hombres'].mean() + df_clean['ingreso_mujeres'].mean()) / 2
     )]
 )
 fig.show()
 ```
 :::
 
-::: {.thumbs-panel}
-::: {.thumb-card}
-[↓ Pobreza por sexo]{.thumb-label}
-[Tasas de pobreza laboral entre hombres y mujeres ocupados por año.]{.thumb-desc}
-:::
-::: {.thumb-card}
-[↓ Formal vs Informal]{.thumb-label}
-[Cómo el tipo de empleo amplifica la vulnerabilidad económica.]{.thumb-desc}
-:::
-::: {.thumb-card}
-[↓ Ratio salarial]{.thumb-label}
-[Proporción histórica del ingreso femenino respecto al masculino.]{.thumb-desc}
-:::
-::: {.thumb-card}
-[↓ Jefatura de hogar]{.thumb-label}
-[Pobreza laboral analizada por sexo del jefe o jefa de familia.]{.thumb-desc}
-:::
-:::
-:::
+::::::: thumbs-panel
+[[↓ Pobreza por sexo]{.thumb-label}  <br>  [Tasas de pobreza laboral entre hombres y mujeres ocupados por año.]{.thumb-desc}](#chart-pob-sexo){.thumb-card}
+
+[[↓ Formal vs Informal]{.thumb-label}  <br>  [Cómo el tipo de empleo amplifica la vulnerabilidad económica.]{.thumb-desc}](#chart-informal){.thumb-card}
+
+[[↓ Ratio salarial]{.thumb-label}  <br>  [Proporción histórica del ingreso femenino respecto al masculino.]{.thumb-desc}](#chart-ratio){.thumb-card}
+
+[[↓ Jefatura de hogar]{.thumb-label}  <br>  [Pobreza laboral analizada por sexo del jefe o jefa de familia.]{.thumb-desc}](#chart-jefatura){.thumb-card}
+:::::::
+:::::::::
 
 <!-- INTERPRETACIÓN -->
-::: {.interp-card}
-La brecha salarial de género en México ha sido una constante estructural durante las últimas dos décadas. Aunque ha mostrado una **leve tendencia a la baja** — pasando de aproximadamente **27.9% en 2005 a 19.9% en 2024** — la diferencia absoluta de ingresos entre hombres y mujeres sigue siendo significativa. Los datos del INEGI (ENOE) revelan que el ingreso promedio mensual de los hombres se ha mantenido consistentemente entre **$6,400 y $8,100**, mientras que el de las mujeres oscila entre **$4,900 y $6,400**. Esta disparidad empuja sistemáticamente a más mujeres por debajo de la Línea de Pobreza Extrema por Ingresos definida por CONEVAL, evidenciando que la simple inserción laboral femenina **no basta** si persisten las condiciones de desigualdad salarial y la alta concentración en el sector informal.
-:::
 
+::: interp-card
+La brecha salarial de género en México ha sido una constante estructural durante las últimas dos décadas. Aunque ha mostrado una **leve tendencia a la baja** — pasando de aproximadamente **27.9% en 2005 a 19.9% en 2024** — la diferencia absoluta de ingresos entre hombres y mujeres sigue siendo significativa. Los datos del INEGI (ENOE) revelan que el ingreso promedio mensual de los hombres se ha mantenido consistentemente entre **\$6,400 y \$8,100**, mientras que el de las mujeres oscila entre **\$4,900 y \$6,400**. Esta disparidad empuja sistemáticamente a más mujeres por debajo de la Línea de Pobreza Extrema por Ingresos definida por CONEVAL, evidenciando que la simple inserción laboral femenina **no basta** si persisten las condiciones de desigualdad salarial y la alta concentración en el sector informal.
 :::
+:::::::::::::::::::::
 
+```{=html}
 <!-- ============================================================
      SECCIÓN: BRECHA
      ============================================================ -->
-::: {.section-anchor #brecha}
+```
 
-::: {.section-title}
+:::::::::: {#brecha .section-anchor}
+::: section-title
 Por cada salario de un hombre, ¿cuánto gana una mujer?
 :::
+
 [Visualizando la disparidad. Históricamente, las mujeres en México perciben menos del 80% del salario masculino.]{.section-subtitle}
 
-::: {.two-col .col-4-6}
-
-::: {.chart-card}
+::::: {.two-col .col-4-6}
+::: {#chart-pob-sexo .chart-card .section-anchor}
 [POBREZA LABORAL POR SEXO (PROMEDIO ANUAL)]{.chart-title}
 
 ```{python}
@@ -644,7 +681,7 @@ fig2.show()
 ```
 :::
 
-::: {.chart-card}
+::: {#chart-ratio .chart-card .section-anchor}
 [¿CUÁNTO GANAN LAS MUJERES RESPECTO A LOS HOMBRES? (%)]{.chart-title}
 
 ```{python}
@@ -670,11 +707,10 @@ fig3.update_layout(
 fig3.show()
 ```
 :::
-:::
+:::::
 
-::: {.two-col .col-5-5}
-
-::: {.chart-card}
+::::: {.two-col .col-5-5}
+::: {#chart-informal .chart-card .section-anchor}
 [POBREZA LABORAL: FORMAL VS INFORMAL]{.chart-title}
 
 ```{python}
@@ -698,7 +734,7 @@ fig4.show()
 ```
 :::
 
-::: {.chart-card}
+::: chart-card
 [CORRELACIÓN: BRECHA SALARIAL VS POBREZA LABORAL FEMENINA]{.chart-title}
 
 ```{python}
@@ -732,18 +768,18 @@ fig5.update_layout(
 fig5.show()
 ```
 :::
-:::
+:::::
+::::::::::
 
-:::
-
+```{=html}
 <!-- ============================================================
      SECCIÓN: ACCIONES
      ============================================================ -->
-::: {.section-anchor #acciones}
+```
 
-::: {.two-col .col-5-5}
-
-::: {.chart-card}
+:::::::::::: {#acciones .section-anchor}
+::::: {.two-col .col-5-5}
+::: {#chart-jefatura .chart-card .section-anchor}
 [POBREZA LABORAL POR JEFATURA DE HOGAR Y SEXO]{.chart-title}
 
 ```{python}
@@ -778,7 +814,7 @@ fig6.show()
 ```
 :::
 
-::: {.chart-card}
+::: chart-card
 [EVOLUCIÓN DE LA BRECHA SALARIAL (%)]{.chart-title}
 
 ```{python}
@@ -804,15 +840,14 @@ fig7.update_layout(
 fig7.show()
 ```
 :::
-:::
+:::::
 
-::: {.acciones-intro}
+::: acciones-intro
 Los datos evidencian una realidad estructural: **la pobreza laboral en México tiene rostro de mujer**. La brecha salarial de género no es solo un indicador numérico — es el mecanismo que condena a millones de mujeres a vivir por debajo de la línea de pobreza extrema, aun cuando trabajan. Las acciones necesarias son urgentes y deben operar en múltiples niveles.
 :::
 
-::: {.acciones-grid}
-
-::: {.accion-card}
+:::::: acciones-grid
+::: accion-card
 [🏛️]{.accion-icon}
 
 ### Política Pública
@@ -824,7 +859,7 @@ Los datos evidencian una realidad estructural: **la pobreza laboral en México t
 **3. Sistema nacional de cuidados** — La informalidad femenina está ligada a las responsabilidades de cuidado. Un sistema de cuidados liberaría a las mujeres para acceder a empleos formales.
 :::
 
-::: {.accion-card}
+::: accion-card
 [📊]{.accion-icon}
 
 ### Investigación y Datos
@@ -836,7 +871,7 @@ Los datos evidencian una realidad estructural: **la pobreza laboral en México t
 **6. Evaluación de impacto** — Medir el efecto causal de programas existentes de empoderamiento económico femenino sobre la reducción de pobreza laboral.
 :::
 
-::: {.accion-card}
+::: accion-card
 [🤝]{.accion-icon}
 
 ### Sociedad y Sector Privado
@@ -847,12 +882,10 @@ Los datos evidencian una realidad estructural: **la pobreza laboral en México t
 
 **9. Transparencia ciudadana** — Herramientas de datos abiertos que permitan monitorear y exigir rendición de cuentas sobre equidad de género en el mercado laboral.
 :::
-:::
+::::::
 
-::: {.footer-note}
+::: footer-note
 Dashboard con datos de INEGI (ENOE) y CONEVAL (ITLP) · Equipo Typers — HackODS UNAM 2026
 :::
-
-:::
-
-:::
+::::::::::::
+::::::::::::::::::::::::::::::::::::::::
