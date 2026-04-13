@@ -19,9 +19,9 @@ El uso de IA en este proyecto fue con el fin de automatizar tareas como la limpi
 
 - **Prompt**: "Ayudame escribiendo un codigo en python que limpie estos  archivos .xls. Lo que me interesa son los indicadores 5 y 6 por genero, no me importan ni el coeficiente de variacion ni el error estandar. Necesito que cada tabla de cada indicador se guarde en un archivo .csv distinto. Quiero que la estructura de la tabla sea tal que sea facil realizar graficas de barras comparativas."
 
-- **Resultado**: Nos proporciono el codigo en un .py de limpieza `limpiar_enoe_indicadores.py`, y los archivos .csv ya limpios, con las variables que requeriamos, tal como se los solicitamos.
+- **Resultado**: Nos proporciono el codigo en un .ipynb de limpieza `limpiar_enoe_indicadores.ipynb`, y los archivos .csv ya limpios, con las variables que requeriamos, tal como se los solicitamos.
 
-- **Decisión**: Elegimos conservar el archivo .py y los .csv
+- **Decisión**: Elegimos conservar el archivo .ipynb y los .csv
 
 ### 2026-04-08 | Gemini | Merge de distintos dataframes con informacion relevante y relacionada.
 - **Tarea**: Escribir codigo para hacer un merge de varios datasets (previamente limpiados por nosotros) en un solo dataset maestro.
