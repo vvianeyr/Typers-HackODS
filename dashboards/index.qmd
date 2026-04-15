@@ -26,6 +26,34 @@ warnings.filterwarnings('ignore')
 df = pd.read_csv('../data/dataset_final_tablero.csv', parse_dates=['fecha'])
 df_clean = df.dropna(subset=['ingreso_hombres', 'ingreso_mujeres']).copy()
 
+# ── Datos: brecha por entidad federativa ──────────────────────────────────────
+_SMN = 7440  # salario mínimo mensual aprox. 2025
+_midpoints = {1: _SMN*0.5, 2: _SMN*1.5, 3: _SMN*2.5, 4: _SMN*4.0, 5: _SMN*6.0}
+
+df_ent = pd.read_csv('../data/clean_data/enoe_salarios_sexo_entidad.csv', encoding='latin-1')
+_df_valid = df_ent[df_ent['Rango_Ingreso_Num'].isin([1,2,3,4,5])].copy()
+_df_valid['midpoint'] = _df_valid['Rango_Ingreso_Num'].map(_midpoints)
+_df_valid['weighted'] = _df_valid['Poblacion'] * _df_valid['midpoint']
+_df_latest = _df_valid[(_df_valid['Anio']==2025) & (_df_valid['Trimestre']=='IV')]
+
+_by_state_sex = (
+    _df_latest
+    .groupby(['Entidad','Sexo'])
+    .apply(lambda g: g['weighted'].sum() / g['Poblacion'].sum())
+    .reset_index()
+)
+_by_state_sex.columns = ['Entidad','Sexo','ingreso_prom']
+df_entidad = (
+    _by_state_sex
+    .pivot(index='Entidad', columns='Sexo', values='ingreso_prom')
+    .reset_index()
+)
+df_entidad['brecha'] = (df_entidad['Hombre'] - df_entidad['Mujer']) / df_entidad['Hombre'] * 100
+df_entidad = df_entidad.sort_values('brecha', ascending=False).reset_index(drop=True)
+
+# ── Datos: proyecciones 10 años ───────────────────────────────────────────────
+df_proy = pd.read_csv('../data/clean_data/proyecciones.csv')
+
 # KPIs
 brecha_promedio      = df_clean['brecha_salarial'].mean() * 100
 ultimo_pob_jef_muj   = df_clean['pob_jefatura_mujeres'].iloc[-1]
@@ -50,30 +78,30 @@ CHART_LAYOUT = dict(
 )
 ```
 
-```{=html}
+
 <!-- ============================================================
      NAV HEADER
      ============================================================ -->
-```
+
 
 ::: nav-header
 [![](assets/logo_hackods.png){.nav-logo}![](assets/unam-logo.svg){.nav-logo-unam}](https://www.hackods.unam.mx/)
 
-<nav>[Datos](#datos){.nav-link} [Brecha](#brecha){.nav-link} [Acciones](#acciones){.nav-link}</nav>
+<nav>[Datos](#datos){.nav-link} [Brecha](#brecha){.nav-link} [Entidades](#entidades){.nav-link} [Proyecciones](#proyecciones){.nav-link} [Acciones](#acciones){.nav-link}</nav>
 :::
 
-```{=html}
+
 <!-- ============================================================
      PAGE WRAPPER START
      ============================================================ -->
-```
+
 
 :::::::::::::::::::::::::::::::::::::::: page-wrapper
-```{=html}
+
 <!-- ============================================================
      SECCIÓN: DATOS
      ============================================================ -->
-```
+
 
 ::::::::::::::::::::: {#datos .section-anchor}
 <!-- HERO -->
@@ -237,11 +265,9 @@ La brecha entre los salarios promedio de hombres y mujeres se ha mantenido const
 
 :::::::::::::::::::::
 
-```{=html}
 <!-- ============================================================
      SECCIÓN: BRECHA
      ============================================================ -->
-```
 
 :::::::::: {#brecha .section-anchor}
 ::: section-title
@@ -458,16 +484,334 @@ En un horizonte de tan solo 10 años, una mujer que percibe el equivalente a un 
 :::
 ::::::::::
 
-```{=html}
+<!-- ============================================================
+     SECCIÓN: BRECHA POR ENTIDAD + PROYECCIONES
+     ============================================================ -->
+
+
+:::::::::: {#entidades .section-anchor}
+::: section-title
+¿Dónde es más profunda la brecha? La desigualdad también tiene geografía
+:::
+
+[El ingreso promedio ponderado por rango salarial revela que la brecha no es homogénea: entidades con mayor informalidad concentran las disparidades más amplias.]{.section-subtitle}
+
+::: chart-card
+[DISPARIDAD SALARIAL ENTRE HOMBRES Y MUJERES POR ENTIDAD FEDERATIVA (Q4 2025)]{.chart-title}
+
+```{python}
+fig_ent = go.Figure()
+
+fig_ent.add_trace(go.Bar(
+    y=df_entidad['Entidad'],
+    x=df_entidad['Mujer'],
+    name='Mujeres',
+    orientation='h',
+    marker=dict(color=COLOR_FEMENINO, opacity=0.85),
+    hovertemplate='<b>%{y}</b><br>Ingreso Mujeres: $%{x:,.0f}<extra></extra>'
+))
+
+fig_ent.add_trace(go.Bar(
+    y=df_entidad['Entidad'],
+    x=df_entidad['Hombre'] - df_entidad['Mujer'],
+    name='Brecha (diferencia)',
+    orientation='h',
+    base=df_entidad['Mujer'],
+    marker=dict(
+        color=df_entidad['brecha'],
+        colorscale=[[0, 'rgba(217,119,6,0.25)'], [1, 'rgba(217,119,6,0.85)']],
+        showscale=True,
+        colorbar=dict(
+            title=dict(text='Brecha (%)', font=dict(size=10)),
+            thickness=10, len=0.6,
+            tickformat='.0f',
+            ticksuffix='%'
+        )
+    ),
+    hovertemplate='<b>%{y}</b><br>Brecha: %{marker.color:.1f}%<extra></extra>'
+))
+
+_chart_ent = {k: v for k, v in CHART_LAYOUT.items() if k not in ('margin', 'legend')}
+fig_ent.update_layout(
+    **_chart_ent,
+    barmode='stack',
+    height=780,
+    margin=dict(l=160, r=80, t=30, b=50),
+    legend=dict(orientation='h', y=1.02, x=0, font=dict(size=10)),
+    xaxis=dict(
+        title='Ingreso promedio mensual ponderado ($MXN)',
+        gridcolor='rgba(0,0,0,0.05)',
+        tickformat='$,.0f'
+    ),
+    yaxis=dict(
+        autorange='reversed',
+        gridcolor='rgba(0,0,0,0)',
+        tickfont=dict(size=10)
+    ),
+)
+
+fig_ent.show(config={'displayModeBar': True, 'toImageButtonOptions': {'filename': 'brecha_entidad', 'format': 'png'}})
+```
+
+::: chart-interpretation
+Hidalgo, Colima y Guerrero encabezan la disparidad con brechas superiores al 25%, mientras que Chiapas y Estado de México presentan las menores diferencias — aunque siguen siendo significativas. No se trata de coincidencia: las entidades con mayor informalidad y economías rurales concentran las brechas más pronunciadas, ya que las mujeres quedan confinadas a los rangos salariales más bajos. Ciudad de México, a pesar de ser el polo económico del país, aún registra una brecha del 15.6%, evidenciando que la desigualdad persiste incluso en mercados laborales más desarrollados.
+:::
+:::
+::::::::::
+
+<!-- ============================================================
+     SECCIÓN: PROYECCIONES
+     ============================================================ -->
+
+:::::::::: {#proyecciones .section-anchor}
+::: section-title
+¿Hacia dónde vamos? Proyecciones a 10 años de la brecha salarial
+:::
+
+[Cuatro modelos estadísticos coinciden en un diagnóstico preocupante: sin intervención estructural, la brecha salarial de género no se cerrará por inercia del mercado en la próxima década.]{.section-subtitle}
+
+::: chart-card
+[PROYECCIÓN DE LA BRECHA SALARIAL 2025–2034: COMPARACIÓN DE MODELOS]{.chart-title}
+
+```{python}
+import plotly.graph_objects as go
+
+_proy_brecha = df_proy[df_proy['variable'] == 'brecha_salarial'].copy()
+_proy_brecha['fecha_dt'] = pd.to_datetime(
+    _proy_brecha['anio'].astype(str) + '-' +
+    (_proy_brecha['trimestre'].map({'I':'01','II':'04','III':'07','IV':'10'}))
+    + '-01'
+)
+
+_MODELOS_COLOR = {
+    'Holt-Winters':             '#3f5cda',
+    'SARIMA':                   '#e8517a',
+    'Prophet':                  '#2B4C6F',
+    'Regresion Polinomica (G2)':'#d97706',
+}
+_MODELOS_DASH = {
+    'Holt-Winters':             'solid',
+    'SARIMA':                   'dot',
+    'Prophet':                  'dash',
+    'Regresion Polinomica (G2)':'dashdot',
+}
+
+# Referencia histórica: último valor real
+_ultimo_real = df_clean['brecha_salarial'].iloc[-1] * 100
+_fecha_ultimo = df_clean['fecha'].iloc[-1]
+
+fig_proy = go.Figure()
+
+# Línea de referencia del último valor real
+fig_proy.add_hline(
+    y=_ultimo_real,
+    line_dash='dot', line_color='gray', line_width=1,
+    annotation_text=f'Último dato real: {_ultimo_real:.1f}% (Q4 2024)',
+    annotation_position='bottom right',
+    annotation_font_size=9, annotation_font_color='gray'
+)
+
+for modelo, grp in _proy_brecha.groupby('modelo'):
+    grp = grp.sort_values('fecha_dt')
+    color = _MODELOS_COLOR.get(modelo, '#666')
+    dash  = _MODELOS_DASH.get(modelo, 'solid')
+
+    # Banda de confianza 80%
+    fig_proy.add_trace(go.Scatter(
+        x=pd.concat([grp['fecha_dt'], grp['fecha_dt'][::-1]]),
+        y=pd.concat([grp['lim_sup_80'], grp['lim_inf_80'][::-1]]) * 100,
+        fill='toself',
+        fillcolor=color.replace(')', ',0.08)').replace('rgb', 'rgba') if 'rgb' in color
+                  else f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+        line=dict(color='rgba(0,0,0,0)'),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+    # Línea principal
+    fig_proy.add_trace(go.Scatter(
+        x=grp['fecha_dt'],
+        y=grp['prediccion'] * 100,
+        name=modelo,
+        mode='lines',
+        line=dict(color=color, width=2.5, dash=dash),
+        hovertemplate=f'<b>{modelo}</b><br>%{{x|%Y-%m}}: %{{y:.2f}}%<extra></extra>'
+    ))
+
+fig_proy.update_layout(
+    **CHART_LAYOUT,
+    height=420,
+    xaxis=dict(title='Periodo', gridcolor='rgba(0,0,0,0.05)', dtick='M12'),
+    yaxis=dict(
+        title='Brecha salarial proyectada (%)',
+        gridcolor='rgba(0,0,0,0.05)',
+        tickformat='.1f',
+        ticksuffix='%'
+    ),
+)
+
+fig_proy.show(config={'displayModeBar': True, 'toImageButtonOptions': {'filename': 'proyeccion_brecha', 'format': 'png'}})
+```
+
+::: chart-interpretation
+Los cuatro modelos coinciden en que la brecha no se cerrará espontáneamente: las proyecciones oscilan entre el **7.6%** (escenario optimista de SARIMA) y el **24.3%** (Regresión Polinómica) para 2034. Holt-Winters y Prophet, los modelos con mejor ajuste a la estacionalidad histórica, proyectan una reducción gradual pero insuficiente — situándose alrededor del 15–19% al final del horizonte. La amplitud de las bandas de confianza subraya la incertidumbre: el futuro de la brecha dependerá crucialmente de decisiones de política pública que hoy aún no están tomadas.
+:::
+:::
+
+::: chart-card
+[PROYECCIÓN DE POBREZA LABORAL FEMENINA 2025–2034: COMPARACIÓN DE MODELOS]{.chart-title}
+
+```{python}
+_proy_pob_muj = df_proy[df_proy['variable'] == 'pobreza_mujeres'].copy()
+_proy_pob_muj['fecha_dt'] = pd.to_datetime(
+    _proy_pob_muj['anio'].astype(str) + '-' +
+    (_proy_pob_muj['trimestre'].map({'I':'01','II':'04','III':'07','IV':'10'}))
+    + '-01'
+)
+
+_ultimo_pob_muj_real = df_clean['pobreza_mujeres'].iloc[-1]
+
+fig_proy_pob = go.Figure()
+
+fig_proy_pob.add_hline(
+    y=_ultimo_pob_muj_real,
+    line_dash='dot', line_color='gray', line_width=1,
+    annotation_text=f'Último dato real: {_ultimo_pob_muj_real:.1f}% (Q4 2024)',
+    annotation_position='bottom right',
+    annotation_font_size=9, annotation_font_color='gray'
+)
+
+for modelo, grp in _proy_pob_muj.groupby('modelo'):
+    grp = grp.sort_values('fecha_dt')
+    color = _MODELOS_COLOR.get(modelo, '#666')
+    dash  = _MODELOS_DASH.get(modelo, 'solid')
+
+    fig_proy_pob.add_trace(go.Scatter(
+        x=pd.concat([grp['fecha_dt'], grp['fecha_dt'][::-1]]),
+        y=pd.concat([grp['lim_sup_80'], grp['lim_inf_80'][::-1]]),
+        fill='toself',
+        fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+        line=dict(color='rgba(0,0,0,0)'),
+        showlegend=False, hoverinfo='skip'
+    ))
+
+    fig_proy_pob.add_trace(go.Scatter(
+        x=grp['fecha_dt'],
+        y=grp['prediccion'],
+        name=modelo,
+        mode='lines',
+        line=dict(color=color, width=2.5, dash=dash),
+        hovertemplate=f'<b>{modelo}</b><br>%{{x|%Y-%m}}: %{{y:.1f}}%<extra></extra>'
+    ))
+
+fig_proy_pob.update_layout(
+    **CHART_LAYOUT,
+    height=400,
+    xaxis=dict(title='Periodo', gridcolor='rgba(0,0,0,0.05)', dtick='M12'),
+    yaxis=dict(
+        title='Pobreza laboral femenina proyectada (%)',
+        gridcolor='rgba(0,0,0,0.05)',
+        tickformat='.1f',
+        ticksuffix='%'
+    ),
+)
+
+fig_proy_pob.show(config={'displayModeBar': True, 'toImageButtonOptions': {'filename': 'proyeccion_pobreza_mujeres', 'format': 'png'}})
+```
+
+::: chart-interpretation
+En pobreza laboral femenina, la divergencia entre modelos es aún más pronunciada: Holt-Winters y Regresión Polinómica mantienen tasas elevadas (9–13%) para 2034, mientras SARIMA proyecta una convergencia hacia el 5.9%. Esta brecha entre modelos no es un error técnico, sino una señal de que el futuro está abierto a la política pública. La trayectoria optimista solo es alcanzable con intervenciones activas; sin ellas, millones de mujeres seguirán atrapadas en la pobreza laboral al final de la próxima década.
+:::
+:::
+
+::: chart-card
+[TABLA COMPARATIVA DE PREDICCIONES AL HORIZONTE 2034]{.chart-title}
+
+```{python}
+_var_labels = {
+    'brecha_salarial':  'Brecha Salarial (%)',
+    'pobreza_mujeres':  'Pobreza Laboral — Mujeres (%)',
+    'pobreza_hombres':  'Pobreza Laboral — Hombres (%)',
+    'pobreza_total':    'Pobreza Laboral Total (%)',
+    'ingreso_mujeres':  'Ingreso Promedio Mujeres ($MXN)',
+    'ingreso_hombres':  'Ingreso Promedio Hombres ($MXN)',
+}
+
+_modelos_order = ['Holt-Winters', 'SARIMA', 'Prophet', 'Regresion Polinomica (G2)']
+
+# Predicción del último trimestre disponible por variable y modelo
+_final = df_proy[df_proy['anio'] == 2034].groupby(['variable','modelo'])['prediccion'].last().reset_index()
+
+rows_labels = []
+rows_values = []
+
+for var, label in _var_labels.items():
+    rows_labels.append(label)
+    row = []
+    for modelo in _modelos_order:
+        val = _final[(_final['variable']==var) & (_final['modelo']==modelo)]['prediccion']
+        if len(val) > 0:
+            v = val.values[0]
+            if 'ingreso' in var:
+                row.append(f'${v:,.0f}')
+            elif 'brecha' in var:
+                row.append(f'{v*100:.1f}%')
+            else:
+                row.append(f'{v:.1f}%')
+        else:
+            row.append('—')
+    rows_values.append(row)
+
+_header_colors = [COLOR_AZUL] + [_MODELOS_COLOR[m] for m in _modelos_order]
+
+fig_tabla = go.Figure(data=[go.Table(
+    columnwidth=[2.2, 1, 1, 1, 1.5],
+    header=dict(
+        values=['<b>Indicador</b>'] + [f'<b>{m}</b>' for m in _modelos_order],
+        fill_color=_header_colors,
+        font=dict(color='white', size=10, family='DM Sans, Arial, sans-serif'),
+        align='center',
+        height=32
+    ),
+    cells=dict(
+        values=[[l for l in rows_labels]] + [[r[i] for r in rows_values] for i in range(len(_modelos_order))],
+        fill_color=[
+            ['rgba(248,248,250,1)' if i%2==0 else 'white' for i in range(len(rows_labels))]
+        ] + [
+            ['rgba(248,248,250,0.5)' if i%2==0 else 'white' for i in range(len(rows_labels))]
+        ] * len(_modelos_order),
+        font=dict(color='#333', size=10, family='DM Sans, Arial, sans-serif'),
+        align=['left'] + ['center']*len(_modelos_order),
+        height=28
+    )
+)])
+
+fig_tabla.update_layout(
+    margin=dict(l=0, r=0, t=10, b=0),
+    height=240,
+    paper_bgcolor='white'
+)
+fig_tabla.show(config={'displayModeBar': False})
+```
+
+::: chart-interpretation
+La tabla revela el rango de escenarios posibles para 2034. En brecha salarial, SARIMA es el modelo más optimista (7.6%) mientras que la Regresión Polinómica advierte sobre una persistencia estructural (24.3%). En ingresos, todos los modelos proyectan crecimiento nominal, pero si la brecha persiste, el incremento absoluto beneficiará desproporcionadamente a los hombres. La comparación entre modelos no busca decir cuál tiene razón, sino subrayar que el futuro es político: las proyecciones más optimistas solo son alcanzables con políticas activas de igualdad salarial, formalización del empleo femenino y sistemas de cuidados.
+:::
+:::
+::::::::::
+
 <!-- ============================================================
      SECCIÓN: ACCIONES
      ============================================================ -->
-```
+
+
+
 
 :::::::::::: {#acciones .section-anchor}
 ::::: {.two-col .col-5-5}
 ::: {#chart-jefatura .chart-card .section-anchor}
 [POBREZA LABORAL POR JEFATURA DE HOGAR Y SEXO]{.chart-title}
+
 
 ```{python}
 fig6 = go.Figure()
